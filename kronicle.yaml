@@ -1,0 +1,16 @@
+# This file is read automatically by Kronicle https://kronicle.tech
+
+
+components:
+  - id: kronicle-cdk-config
+    name: Kronicle CDK Config
+    typeId: cdk-config
+    description: |
+      AWS CDK config for installing Kronicle on AWS
+    repo:
+      url: https://github.com/kronicle-tech/kronicle-cdk-config.git
+    teams:
+      - teamId: kronicle-project
+        description: |
+          The Kroncile Project maintains this AWS CDK config for Kronicle
+    platformId: aws-cdk
