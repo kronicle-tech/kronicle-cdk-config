@@ -4,7 +4,7 @@
 components:
   - id: kronicle-cdk-config
     name: Kronicle CDK Config
-    typeId: cdk-config
+    typeId: aws-cdk-config
     description: |
       AWS CDK config for installing Kronicle on AWS
     repo:
