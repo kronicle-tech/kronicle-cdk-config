@@ -7,6 +7,7 @@ import * as ecsPatterns from "aws-cdk-lib/aws-ecs-patterns";
 import { ApplicationLoadBalancedServiceRecordType } from "aws-cdk-lib/aws-ecs-patterns";
 import * as elb from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
+import { Duration } from "aws-cdk-lib";
 
 export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -44,7 +45,7 @@ export class KronicleStack extends cdk.Stack {
     taskDefinition.addContainer("KronicleApp", {
       containerName: "kronicle-app",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/v1k6a4j2/kronicle-app:0.1.138-pre-release"
+        "public.ecr.aws/v1k6a4j2/kronicle-app:0.1.139"
       ),
       cpu: 512,
       memoryReservationMiB: 1_024,
@@ -57,6 +58,13 @@ export class KronicleStack extends cdk.Stack {
           containerPort: 3000,
         },
       ],
+      healthCheck: {
+        command: ["CMD", "node", "bin/healthcheck.js"],
+        timeout: Duration.seconds(15),
+        interval: Duration.seconds(60),
+        retries: 5,
+        startPeriod: Duration.seconds(15),
+      },
       environment: {
         SERVER_SIDE_SERVICE_BASE_URL: "http://localhost:8090",
         ANALYTICS_PLAUSIBLE_ENABLED: "true",
@@ -80,7 +88,7 @@ Interesting pages in the demo:
     taskDefinition.addContainer("KronicleService", {
       containerName: "kronicle-service",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/v1k6a4j2/kronicle-service:0.1.138-pre-release"
+        "public.ecr.aws/v1k6a4j2/kronicle-service:0.1.139"
       ),
       cpu: 1_024,
       memoryReservationMiB: 2_024,
@@ -93,6 +101,13 @@ Interesting pages in the demo:
           containerPort: 8090,
         },
       ],
+      healthCheck: {
+        command: ["CMD", "java", "Healthcheck.java"],
+        timeout: Duration.seconds(15),
+        interval: Duration.seconds(60),
+        retries: 5,
+        startPeriod: Duration.seconds(15),
+      },
       environment: {
         OPENAPI_SPEC_CLEAR_EXISTING_SERVERS: "true",
         OPENAPI_SPEC_SERVERS_0_DESCRIPTION:
