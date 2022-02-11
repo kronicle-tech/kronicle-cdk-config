@@ -20,7 +20,7 @@ export class KronicleStack extends cdk.Stack {
       clusterName: "kronicle",
       vpc,
     });
-    const domainName = "demo-new.kronicle.tech";
+    const domainName = "demo.kronicle.tech";
     const certificate = new acm.Certificate(this, "KronicleCertificate", {
       domainName,
       validation: acm.CertificateValidation.fromDns(),
