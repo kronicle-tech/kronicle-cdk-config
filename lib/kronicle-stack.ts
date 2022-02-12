@@ -100,6 +100,9 @@ Interesting pages in the demo:
         {
           containerPort: 8090,
         },
+        {
+          containerPort: 8091,
+        },
       ],
       healthCheck: {
         command: ["CMD", "java", "Healthcheck.java"],
