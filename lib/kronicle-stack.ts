@@ -45,7 +45,7 @@ export class KronicleStack extends cdk.Stack {
     taskDefinition.addContainer("KronicleApp", {
       containerName: "kronicle-app",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/v1k6a4j2/kronicle-app:0.1.139"
+        "public.ecr.aws/v1k6a4j2/kronicle-app:0.1.143"
       ),
       cpu: 512,
       memoryReservationMiB: 1_024,
@@ -59,7 +59,7 @@ export class KronicleStack extends cdk.Stack {
         },
       ],
       healthCheck: {
-        command: ["CMD", "node", "bin/healthcheck.js"],
+        command: ["CMD", "/nodejs/bin/node", "bin/healthcheck.js"],
         timeout: Duration.seconds(15),
         interval: Duration.seconds(60),
         retries: 5,
@@ -88,7 +88,7 @@ Interesting pages in the demo:
     taskDefinition.addContainer("KronicleService", {
       containerName: "kronicle-service",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/v1k6a4j2/kronicle-service:0.1.139"
+        "public.ecr.aws/v1k6a4j2/kronicle-service:0.1.143"
       ),
       cpu: 1_024,
       memoryReservationMiB: 2_024,
