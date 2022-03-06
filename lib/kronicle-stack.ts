@@ -34,6 +34,16 @@ export class KronicleStack extends cdk.Stack {
       domainName,
       validation: acm.CertificateValidation.fromDns(),
     });
+    // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
+    // with access tokens.  These access tokens can be placed in a "secret" in AWS Secrets Manager.  Create a secret
+    // in AWS Secrets Manager named "kronicle" with a value like this:
+    //
+    // {
+    //   "github-username": "some-github-username",
+    //   "github-access-token": "some-github-access-token"
+    // }
+    //
+    // Note: The secret needs to be created before using CDK to deploy this CDK project
     const kronicleServiceConfigSecret = sm.Secret.fromSecretNameV2(
       this,
       "KronicleServiceConfigSecret",
