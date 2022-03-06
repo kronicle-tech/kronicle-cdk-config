@@ -51,7 +51,7 @@ export class KronicleStack extends cdk.Stack {
     taskDefinition.addContainer("KronicleApp", {
       containerName: "kronicle-app",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/kronicle-tech/kronicle-app:0.1.143"
+        "public.ecr.aws/kronicle-tech/kronicle-app:0.1.161"
       ),
       cpu: 512,
       memoryReservationMiB: 1_024,
@@ -95,7 +95,7 @@ Interesting pages in the demo:
     taskDefinition.addContainer("KronicleService", {
       containerName: "kronicle-service",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/kronicle-tech/kronicle-service:0.1.143"
+        "public.ecr.aws/kronicle-tech/kronicle-service:0.1.161"
       ),
       cpu: 1_024,
       memoryReservationMiB: 2_024,
@@ -119,76 +119,32 @@ Interesting pages in the demo:
         startPeriod: Duration.seconds(15),
       },
       environment: {
-        OPENAPI_SPEC_CLEAR_EXISTING_SERVERS: "true",
-        OPENAPI_SPEC_SERVERS_0_DESCRIPTION:
-          "The demo instance of Kronicle Service",
         REPO_FINDERS_IGNORED_REPOS_0_URL:
           "https://github.com/kronicle-tech/kronicle-metadata-repo-template.git",
         REPO_FINDERS_IGNORED_REPOS_1_URL:
           "https://github.com/kronicle-tech/kronicle-metadata-codebase-template.git",
-        REPO_FINDERS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
-        REPO_FINDERS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
-        KEY_SOFTWARE_RULES_0_SOFTWARE_NAME_PATTERN: "^gradle-wrapper$",
-        KEY_SOFTWARE_RULES_0_NAME: "Gradle",
-        KEY_SOFTWARE_RULES_1_SOFTWARE_NAME_PATTERN:
-          "^org.springframework.boot:",
-        KEY_SOFTWARE_RULES_1_NAME: "Spring Boot",
-        KEY_SOFTWARE_RULES_2_SOFTWARE_NAME_PATTERN: "^com.google.guava:guava$",
-        KEY_SOFTWARE_RULES_2_NAME: "Guava",
-        KEY_SOFTWARE_RULES_3_SOFTWARE_NAME_PATTERN: "^io.zipkin.brave:brave$",
-        KEY_SOFTWARE_RULES_3_NAME: "Zipkin Brave",
-        KEY_SOFTWARE_RULES_4_SOFTWARE_NAME_PATTERN:
-          "^io.dropwizard:dropwizard-core$",
-        KEY_SOFTWARE_RULES_4_NAME: "Dropwizard",
-        KEY_SOFTWARE_RULES_5_SOFTWARE_NAME_PATTERN:
-          "^com.fasterxml.jackson.core:",
-        KEY_SOFTWARE_RULES_5_NAME: "Jackson",
-        KEY_SOFTWARE_RULES_6_SOFTWARE_NAME_PATTERN:
-          "^org.springframework.cloud:spring-cloud-dependencies$",
-        KEY_SOFTWARE_RULES_6_NAME: "Spring Cloud",
-        KEY_SOFTWARE_RULES_7_SOFTWARE_NAME_PATTERN:
-          "^org.projectlombok:lombok$",
-        KEY_SOFTWARE_RULES_7_NAME: "Lombok",
-        KEY_SOFTWARE_RULES_8_SOFTWARE_NAME_PATTERN:
-          "^org.jetbrains.kotlin:kotlin-bom$",
-        KEY_SOFTWARE_RULES_8_NAME: "Kotlin",
-        KEY_SOFTWARE_RULES_9_SOFTWARE_NAME_PATTERN:
-          "^io.micronaut:micronaut-bom$",
-        KEY_SOFTWARE_RULES_9_NAME: "Micronaut",
-        KEY_SOFTWARE_RULES_10_SOFTWARE_NAME_PATTERN: "^aws-cdk$",
-        KEY_SOFTWARE_RULES_10_NAME: "AWS CDK",
-        KEY_SOFTWARE_RULES_11_SOFTWARE_NAME_PATTERN: "^aws-sdk$",
-        KEY_SOFTWARE_RULES_11_NAME: "AWS SDK",
-        KEY_SOFTWARE_RULES_12_SOFTWARE_NAME_PATTERN: "^vue$",
-        KEY_SOFTWARE_RULES_12_NAME: "Vue",
-        KEY_SOFTWARE_RULES_13_SOFTWARE_NAME_PATTERN: "^nuxt$",
-        KEY_SOFTWARE_RULES_13_NAME: "Nuxt",
-        KEY_SOFTWARE_RULES_14_SOFTWARE_NAME_PATTERN: "^react$",
-        KEY_SOFTWARE_RULES_14_NAME: "React",
-        KEY_SOFTWARE_RULES_15_SOFTWARE_NAME_PATTERN: "^next$",
-        KEY_SOFTWARE_RULES_15_NAME: "Next.js",
-        KEY_SOFTWARE_RULES_16_SOFTWARE_NAME_PATTERN: "^@angular/core$",
-        KEY_SOFTWARE_RULES_16_NAME: "Angular",
-        SONARQUBE_BASE_URL: "https://sonarcloud.io",
-        SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
+        PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
+        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
+        PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
+        PLUGINS_SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
       },
       secrets: {
-        REPO_FINDERS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_USERNAME:
+        PLUGINS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_USERNAME:
           ecs.Secret.fromSecretsManager(
             kronicleServiceConfigSecret,
             "kronicle-tech-github-username"
           ),
-        REPO_FINDERS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_VALUE:
+        PLUGINS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_VALUE:
           ecs.Secret.fromSecretsManager(
             kronicleServiceConfigSecret,
             "kronicle-tech-github-access-token"
           ),
-        REPO_FINDERS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_USERNAME:
+        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_USERNAME:
           ecs.Secret.fromSecretsManager(
             kronicleServiceConfigSecret,
             "kronicle-computers-github-username"
           ),
-        REPO_FINDERS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_VALUE:
+        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_VALUE:
           ecs.Secret.fromSecretsManager(
             kronicleServiceConfigSecret,
             "kronicle-computers-github-access-token"
