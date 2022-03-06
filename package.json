@@ -2,7 +2,7 @@
   "name": "kronicle-cdk-config",
   "version": "0.1.0",
   "bin": {
-    "kronicle-cdk-config": "bin/kronicle-cdk-config.js"
+    "kronicle": "bin/kronicle.js"
   },
   "scripts": {
     "build": "tsc",

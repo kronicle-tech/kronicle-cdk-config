@@ -16,6 +16,14 @@ export class KronicleStack extends cdk.Stack {
     const vpc = new ec2.Vpc(this, "KronicleVpc", {
       vpcName: "kronicle",
       maxAzs: 2,
+      natGateways: 0,
+      subnetConfiguration: [
+        {
+          cidrMask: 24,
+          name: "public",
+          subnetType: ec2.SubnetType.PUBLIC,
+        },
+      ],
     });
     const cluster = new ecs.Cluster(this, "KronicleEcsCluster", {
       clusterName: "kronicle",
@@ -26,12 +34,10 @@ export class KronicleStack extends cdk.Stack {
       domainName,
       validation: acm.CertificateValidation.fromDns(),
     });
-    const kronicleServiceConfigSecret = new sm.Secret(
+    const kronicleServiceConfigSecret = sm.Secret.fromSecretNameV2(
       this,
       "KronicleServiceConfigSecret",
-      {
-        secretName: "kronicle",
-      }
+      "kronicle"
     );
     const taskDefinition = new ecs.FargateTaskDefinition(
       this,
@@ -45,7 +51,7 @@ export class KronicleStack extends cdk.Stack {
     taskDefinition.addContainer("KronicleApp", {
       containerName: "kronicle-app",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/v1k6a4j2/kronicle-app:0.1.143"
+        "public.ecr.aws/kronicle-tech/kronicle-app:0.1.143"
       ),
       cpu: 512,
       memoryReservationMiB: 1_024,
@@ -68,6 +74,7 @@ export class KronicleStack extends cdk.Stack {
       environment: {
         SERVER_SIDE_SERVICE_BASE_URL: "http://localhost:8090",
         ANALYTICS_PLAUSIBLE_ENABLED: "true",
+        ANALYTICS_PLAUSIBLE_DATA_DOMAIN: "demo.kronicle.tech",
         INTRO_TITLE: "Kronicle Live Demo",
         INTRO_MARKDOWN: `This is a live demo for [Kronicle](https://kronicle.tech). Kronicle is an open source system for
 visualising and documenting a tech stack, including software and infrastructure.
@@ -88,7 +95,7 @@ Interesting pages in the demo:
     taskDefinition.addContainer("KronicleService", {
       containerName: "kronicle-service",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/v1k6a4j2/kronicle-service:0.1.143"
+        "public.ecr.aws/kronicle-tech/kronicle-service:0.1.143"
       ),
       cpu: 1_024,
       memoryReservationMiB: 2_024,
