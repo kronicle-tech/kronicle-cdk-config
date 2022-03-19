@@ -61,7 +61,7 @@ export class KronicleStack extends cdk.Stack {
     taskDefinition.addContainer("KronicleApp", {
       containerName: "kronicle-app",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/kronicle-tech/kronicle-app:0.1.161"
+        "public.ecr.aws/kronicle-tech/kronicle-app:0.1.163"
       ),
       cpu: 512,
       memoryReservationMiB: 1_024,
@@ -105,7 +105,7 @@ Interesting pages in the demo:
     taskDefinition.addContainer("KronicleService", {
       containerName: "kronicle-service",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/kronicle-tech/kronicle-service:0.1.161"
+        "public.ecr.aws/kronicle-tech/kronicle-service:0.1.163"
       ),
       cpu: 1_024,
       memoryReservationMiB: 2_024,
@@ -129,14 +129,18 @@ Interesting pages in the demo:
         startPeriod: Duration.seconds(15),
       },
       environment: {
+        PLUGINS_GITHUB_ENABLED: "true",
+        PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
+        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
+        PLUGINS_SONARQUBE_ENABLED: "true",
+        PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
+        PLUGINS_SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
         REPO_FINDERS_IGNORED_REPOS_0_URL:
           "https://github.com/kronicle-tech/kronicle-metadata-repo-template.git",
         REPO_FINDERS_IGNORED_REPOS_1_URL:
           "https://github.com/kronicle-tech/kronicle-metadata-codebase-template.git",
-        PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
-        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
-        PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
-        PLUGINS_SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
+        REPO_FINDERS_IGNORED_REPOS_2_URL:
+          "https://github.com/kronicle-tech/kronicle-argocd-config.git",
       },
       secrets: {
         PLUGINS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_USERNAME:
