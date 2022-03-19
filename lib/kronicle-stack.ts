@@ -132,6 +132,8 @@ Interesting pages in the demo:
         PLUGINS_GITHUB_ENABLED: "true",
         PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
         PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
+        PLUGINS_AWS_ENABLED: "true",
+        PLUGINS_AWS_PROFILES_0_REGIONS_0: "us-west-2",
         PLUGINS_SONARQUBE_ENABLED: "true",
         PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
         PLUGINS_SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
