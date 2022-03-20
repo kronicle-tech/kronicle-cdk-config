@@ -166,14 +166,14 @@ Interesting pages in the demo:
           ),
       },
     });
-    taskDefinition.addToExecutionRolePolicy(
+    taskDefinition.addToTaskRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["xray:GetServiceGraph"],
         resources: ["*"],
       })
     );
-    taskDefinition.addToExecutionRolePolicy(
+    taskDefinition.addToTaskRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["tag:GetResources"],
