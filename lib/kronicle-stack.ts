@@ -1,13 +1,12 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
-import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as ecsPatterns from "aws-cdk-lib/aws-ecs-patterns";
-import { ApplicationLoadBalancedServiceRecordType } from "aws-cdk-lib/aws-ecs-patterns";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as elb from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
-import { Duration } from "aws-cdk-lib";
 
 export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -76,10 +75,10 @@ export class KronicleStack extends cdk.Stack {
       ],
       healthCheck: {
         command: ["CMD", "/nodejs/bin/node", "bin/healthcheck.js"],
-        timeout: Duration.seconds(15),
-        interval: Duration.seconds(60),
+        timeout: cdk.Duration.seconds(15),
+        interval: cdk.Duration.seconds(60),
         retries: 5,
-        startPeriod: Duration.seconds(15),
+        startPeriod: cdk.Duration.seconds(15),
       },
       environment: {
         SERVER_SIDE_SERVICE_BASE_URL: "http://localhost:8090",
@@ -123,10 +122,10 @@ Interesting pages in the demo:
       ],
       healthCheck: {
         command: ["CMD", "java", "Healthcheck.java"],
-        timeout: Duration.seconds(15),
-        interval: Duration.seconds(60),
+        timeout: cdk.Duration.seconds(15),
+        interval: cdk.Duration.seconds(60),
         retries: 5,
-        startPeriod: Duration.seconds(15),
+        startPeriod: cdk.Duration.seconds(15),
       },
       environment: {
         PLUGINS_GITHUB_ENABLED: "true",
@@ -167,6 +166,20 @@ Interesting pages in the demo:
           ),
       },
     });
+    taskDefinition.addToExecutionRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["xray:GetServiceGraph"],
+        resources: ["*"],
+      })
+    );
+    taskDefinition.addToExecutionRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["tag:GetResources"],
+        resources: ["*"],
+      })
+    );
     const service = new ecsPatterns.ApplicationLoadBalancedFargateService(
       this,
       "KronicleEcsService",
@@ -176,7 +189,7 @@ Interesting pages in the demo:
         cluster,
         taskDefinition,
         assignPublicIp: true,
-        recordType: ApplicationLoadBalancedServiceRecordType.CNAME,
+        recordType: ecsPatterns.ApplicationLoadBalancedServiceRecordType.CNAME,
         certificate,
         sslPolicy: elb.SslPolicy.RECOMMENDED,
         redirectHTTP: true,
