@@ -130,7 +130,7 @@ Interesting pages in the demo:
       environment: {
         PLUGINS_GITHUB_ENABLED: "true",
         PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
-        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
+        // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
         PLUGINS_AWS_ENABLED: "true",
         PLUGINS_AWS_PROFILES_0_REGIONS_0: "us-west-2",
         PLUGINS_SONARQUBE_ENABLED: "true",
@@ -154,16 +154,16 @@ Interesting pages in the demo:
             kronicleServiceConfigSecret,
             "kronicle-tech-github-access-token"
           ),
-        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_USERNAME:
-          ecs.Secret.fromSecretsManager(
-            kronicleServiceConfigSecret,
-            "kronicle-computers-github-username"
-          ),
-        PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_VALUE:
-          ecs.Secret.fromSecretsManager(
-            kronicleServiceConfigSecret,
-            "kronicle-computers-github-access-token"
-          ),
+        // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_USERNAME:
+        //   ecs.Secret.fromSecretsManager(
+        //     kronicleServiceConfigSecret,
+        //     "kronicle-computers-github-username"
+        //   ),
+        // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_VALUE:
+        //   ecs.Secret.fromSecretsManager(
+        //     kronicleServiceConfigSecret,
+        //     "kronicle-computers-github-access-token"
+        //   ),
       },
     });
     taskDefinition.addToTaskRolePolicy(
