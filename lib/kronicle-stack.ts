@@ -60,7 +60,7 @@ export class KronicleStack extends cdk.Stack {
     taskDefinition.addContainer("KronicleApp", {
       containerName: "kronicle-app",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/kronicle-tech/kronicle-app:0.1.165"
+        "public.ecr.aws/kronicle-tech/kronicle-app:0.1.166"
       ),
       cpu: 512,
       memoryReservationMiB: 1_024,
@@ -104,7 +104,7 @@ Interesting pages in the demo:
     taskDefinition.addContainer("KronicleService", {
       containerName: "kronicle-service",
       image: ecs.ContainerImage.fromRegistry(
-        "public.ecr.aws/kronicle-tech/kronicle-service:0.1.165"
+        "public.ecr.aws/kronicle-tech/kronicle-service:0.1.166"
       ),
       cpu: 1_024,
       memoryReservationMiB: 2_024,
