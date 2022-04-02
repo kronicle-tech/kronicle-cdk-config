@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.167";
+    const kronicleVersion = "0.1.177";
 
     const vpc = new ec2.Vpc(this, "KronicleVpc", {
       vpcName: "kronicle",
@@ -179,6 +179,13 @@ Interesting pages in the demo:
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["tag:GetResources"],
+        resources: ["*"],
+      })
+    );
+    taskDefinition.addToTaskRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["logs:StartQuery"],
         resources: ["*"],
       })
     );
