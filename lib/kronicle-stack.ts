@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.177";
+    const kronicleVersion = "0.1.180";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -56,6 +56,7 @@ Interesting pages in the demo:
       PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
       // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
       PLUGINS_AWS_ENABLED: "true",
+      PLUGINS_AWS_PROFILES_0_ENVIRONMENT_ID: "production",
       PLUGINS_AWS_PROFILES_0_REGIONS_0: "us-west-2",
       PLUGINS_SONARQUBE_ENABLED: "true",
       PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
@@ -94,17 +95,19 @@ Interesting pages in the demo:
     const cluster = this.createEcsCluster(vpc);
     const certificate = this.createCertificate(domainName);
     const taskDefinition = this.createFargateTaskDefinition();
-    this.createKronicleAppContainer(
+    const kronicleAppContainer = this.createKronicleAppContainer(
       taskDefinition,
       kronicleVersion,
       kronicleAppEnvironment
     );
-    this.createKronicleServiceContainer(
+    cdk.Tags.of(kronicleAppContainer).add("component", "kronicle-app");
+    const kronicleServiceContainer = this.createKronicleServiceContainer(
       taskDefinition,
       kronicleVersion,
       kronicleServiceEnvironment,
       kronicleServiceSecrets
     );
+    cdk.Tags.of(kronicleServiceContainer).add("component", "kronicle-service");
     this.addPolicyStatementsToFargateTaskRole(taskDefinition, [
       {
         effect: iam.Effect.ALLOW,
@@ -118,7 +121,7 @@ Interesting pages in the demo:
       },
       {
         effect: iam.Effect.ALLOW,
-        actions: ["logs:StartQuery"],
+        actions: ["logs:StartQuery", "logs:GetQueryResults"],
         resources: ["*"],
       },
     ]);
@@ -136,7 +139,7 @@ Interesting pages in the demo:
       [key: string]: string;
     }
   ) {
-    taskDefinition.addContainer("KronicleApp", {
+    return taskDefinition.addContainer("KronicleApp", {
       containerName: "kronicle-app",
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-app:${kronicleVersion}`
@@ -173,7 +176,7 @@ Interesting pages in the demo:
       [key: string]: ecs.Secret;
     }
   ) {
-    taskDefinition.addContainer("KronicleService", {
+    return taskDefinition.addContainer("KronicleService", {
       containerName: "kronicle-service",
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-service:${kronicleVersion}`
