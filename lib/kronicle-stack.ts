@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.180";
+    const kronicleVersion = "0.1.185";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -122,6 +122,11 @@ Interesting pages in the demo:
       {
         effect: iam.Effect.ALLOW,
         actions: ["logs:StartQuery", "logs:GetQueryResults"],
+        resources: ["*"],
+      },
+      {
+        effect: iam.Effect.ALLOW,
+        actions: ["synthetics:DescribeCanariesLastRun"],
         resources: ["*"],
       },
     ]);
