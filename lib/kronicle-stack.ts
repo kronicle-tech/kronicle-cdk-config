@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.193";
+    const kronicleVersion = "0.1.205-pre-release";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -36,20 +36,9 @@ export class KronicleStack extends cdk.Stack {
       ANALYTICS_PLAUSIBLE_ENABLED: "true",
       ANALYTICS_PLAUSIBLE_DATA_DOMAIN: "demo.kronicle.tech",
       INTRO_TITLE: "Kronicle Live Demo",
-      INTRO_MARKDOWN: `This is a live demo for [Kronicle](https://kronicle.tech). Kronicle is an open source system for
-visualising and documenting a tech stack, including software and infrastructure.
-
-Interesting pages in the demo:
-
-1. [An interactive, dynamically generated dependencies diagram](/all-components/dependencies) that shows all the components in the demo tech stack and how they connect to each other.  Try hovering over items in the diagram and using the filters on the right hand side.
-2. [A list of all the components in the demo tech stack](/all-components).  Try using the filters on the right hand side.
-3. Kronicle fully supports OpenAPI specs.  Kronicle can download OpenAPI specs hosted on a service's endpoint (e.g. with Springdoc) and then [hostes a copy of those OpenAPI specs](/all-components/openapi-specs).  Click a link in the \`Link\` column on that page to view an individual OpenAPI spec rendered using Redoc.
-4. [A list of all the components owned by a team](/teams/kronicle-project/components)
-5. [Dependencies diagram for an individual component](/components/kronicle-service/dependencies).  Use the radius dropdown on the right hand side to see more of the tech stack that surrounds the component.
-6. [A component's page which shows the "key software" used by the component and other important information](/components/kronicle-service).  Kronicle automatically scans Gradle build scripts (npm support coming soon) to find the key software used by the component.
-7. [All the tech debt for the tech stack](/all-components/tech-debts)
-8. [All the cross functional requirements (NFRs) for a team](/teams/kronicle-project/cross-functional-requirements)
-9. [Response times for any components using Zipkin for distributed tracing](/components/kronicle-service/response-times)`,
+      INTRO_MARKDOWN: `This is a live demo of [Kronicle](https://kronicle.tech). Kronicle is an open source platform 
+for visualising and documenting a tech stack, including software and infrastructure.  The demo is a real instance of 
+Kronicle, containing real data.  `,
     };
     const kronicleServiceEnvironment = {
       PLUGINS_GITHUB_ENABLED: "true",
