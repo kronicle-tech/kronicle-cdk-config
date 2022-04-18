@@ -38,7 +38,9 @@ export class KronicleStack extends cdk.Stack {
       INTRO_TITLE: "Kronicle Live Demo",
       INTRO_MARKDOWN: `This is a live demo of [Kronicle](https://kronicle.tech). Kronicle is an open source platform 
 for visualising and documenting a tech stack, including software and infrastructure.  The demo is a real instance of 
-Kronicle, containing real data.  `,
+Kronicle, containing real data.  
+
+Use the menu above to view the different parts of Kronicle.  `,
     };
     const kronicleServiceEnvironment = {
       PLUGINS_GITHUB_ENABLED: "true",
