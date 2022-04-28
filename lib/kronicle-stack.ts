@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.223";
+    const kronicleVersion = "0.1.229-pre-release";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -47,6 +47,7 @@ Use the menu above to view the different parts of Kronicle.  `,
       PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
       // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
       PLUGINS_AWS_ENABLED: "true",
+      PLUGINS_AWS_COPY_RESOURCE_TAGS_TO_COMPONENTS: "false",
       PLUGINS_AWS_CREATE_DEPENDENCIES_FOR_RESOURCES: "true",
       PLUGINS_AWS_PROFILES_0_ENVIRONMENT_ID: "production",
       PLUGINS_AWS_PROFILES_0_REGIONS_0: "us-west-2",
