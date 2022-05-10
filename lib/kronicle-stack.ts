@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.238";
+    const kronicleVersion = "0.1.254";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -142,7 +142,7 @@ Use the menu above to view the different parts of Kronicle.  `,
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-app:${kronicleVersion}`
       ),
-      cpu: 512,
+      cpu: 256,
       memoryReservationMiB: 1_024,
       essential: true,
       logging: ecs.LogDrivers.awsLogs({
@@ -179,7 +179,7 @@ Use the menu above to view the different parts of Kronicle.  `,
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-service:${kronicleVersion}`
       ),
-      cpu: 1_024,
+      cpu: 768,
       memoryReservationMiB: 2_024,
       essential: true,
       logging: ecs.LogDrivers.awsLogs({
@@ -237,7 +237,7 @@ Use the menu above to view the different parts of Kronicle.  `,
   private createFargateTaskDefinition() {
     return new ecs.FargateTaskDefinition(this, "KronicleTaskDefinition", {
       family: "kronicle",
-      cpu: 2_048,
+      cpu: 1_024,
       memoryLimitMiB: 4_096,
     });
   }
