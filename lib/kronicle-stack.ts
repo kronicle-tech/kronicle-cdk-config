@@ -41,6 +41,9 @@ for visualising and documenting a tech stack, including software and infrastruct
 Kronicle, containing real data.  
 
 Use the menu above to view the different parts of Kronicle.  `,
+      MESSAGE_MARKDOWN:
+        "See [Kronicle's website](https://kronicle.tech/) for more information about Kronicle",
+      MESSAGE_VARIANT: "dark",
     };
     const kronicleServiceEnvironment = {
       PLUGINS_GITHUB_ENABLED: "true",
