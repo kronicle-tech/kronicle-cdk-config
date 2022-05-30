@@ -10,3 +10,5 @@ cdk.out
 
 # CDK Context
 cdk.context.json
+
+.gradle
