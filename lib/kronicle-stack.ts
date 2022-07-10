@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.331";
+    const kronicleVersion = "0.1.335";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -47,12 +47,15 @@ Use the menu above to view the different parts of Kronicle.  `,
     const kronicleServiceEnvironment = {
       PLUGINS_GITHUB_ENABLED: "true",
       PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
-      // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCOUNT_NAME: "kronicle-computers",
       PLUGINS_AWS_ENABLED: "true",
       PLUGINS_AWS_COPY_RESOURCE_TAGS_TO_COMPONENTS: "false",
       PLUGINS_AWS_CREATE_DEPENDENCIES_FOR_RESOURCES: "true",
       PLUGINS_AWS_PROFILES_0_ENVIRONMENT_ID: "production",
       PLUGINS_AWS_PROFILES_0_REGIONS_0: "us-west-2",
+      PLUGINS_AWS_LOG_SUMMARIES_ONE_HOUR_SUMMARIES: "false",
+      PLUGINS_AWS_LOG_SUMMARIES_TWENTY_FOUR_HOUR_SUMMARIES: "false",
+      PLUGINS_KUBERNETES_ENABLED: "true",
+      PLUGINS_KUBERNETES_CLUSTERS_0_ENVIRONMENT_ID: "production",
       PLUGINS_SONARQUBE_ENABLED: "true",
       PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
       PLUGINS_SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
@@ -74,16 +77,11 @@ Use the menu above to view the different parts of Kronicle.  `,
           kronicleServiceConfigSecret,
           "kronicle-tech-github-access-token"
         ),
-      // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_USERNAME:
-      //   ecs.Secret.fromSecretsManager(
-      //     kronicleServiceConfigSecret,
-      //     "kronicle-computers-github-username"
-      //   ),
-      // PLUGINS_GITHUB_ORGANIZATIONS_1_ACCESS_TOKEN_VALUE:
-      //   ecs.Secret.fromSecretsManager(
-      //     kronicleServiceConfigSecret,
-      //     "kronicle-computers-github-access-token"
-      //   ),
+      PLUGINS_KUBERNETES_CLUSTERS_0_KUBE_CONFIG:
+        ecs.Secret.fromSecretsManager(
+          kronicleServiceConfigSecret,
+          "example-eks-kube-config"
+        ),
     };
 
     const vpc = this.createVpc();
@@ -158,8 +156,8 @@ Use the menu above to view the different parts of Kronicle.  `,
       healthCheck: {
         command: ["CMD", "/nodejs/bin/node", "bin/healthcheck.js"],
         timeout: cdk.Duration.seconds(15),
-        interval: cdk.Duration.seconds(60),
-        retries: 5,
+        interval: cdk.Duration.seconds(30),
+        retries: 10,
         startPeriod: cdk.Duration.seconds(15),
       },
       environment,
@@ -198,8 +196,8 @@ Use the menu above to view the different parts of Kronicle.  `,
       healthCheck: {
         command: ["CMD", "java", "Healthcheck.java"],
         timeout: cdk.Duration.seconds(15),
-        interval: cdk.Duration.seconds(60),
-        retries: 5,
+        interval: cdk.Duration.seconds(30),
+        retries: 10,
         startPeriod: cdk.Duration.seconds(15),
       },
       environment,
