@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.335";
+    const kronicleVersion = "0.1.342";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -48,6 +48,7 @@ Use the menu above to view the different parts of Kronicle.  `,
       PLUGINS_GITHUB_ENABLED: "true",
       PLUGINS_GITHUB_ORGANIZATIONS_0_ACCOUNT_NAME: "kronicle-tech",
       PLUGINS_AWS_ENABLED: "true",
+      PLUGINS_AWS_API_RESOURCES_WITH_SUPPORTED_METADATA_ONLY: "true",
       PLUGINS_AWS_COPY_RESOURCE_TAGS_TO_COMPONENTS: "false",
       PLUGINS_AWS_CREATE_DEPENDENCIES_FOR_RESOURCES: "true",
       PLUGINS_AWS_PROFILES_0_ENVIRONMENT_ID: "production",
@@ -56,6 +57,7 @@ Use the menu above to view the different parts of Kronicle.  `,
       PLUGINS_AWS_LOG_SUMMARIES_TWENTY_FOUR_HOUR_SUMMARIES: "false",
       PLUGINS_KUBERNETES_ENABLED: "true",
       PLUGINS_KUBERNETES_CLUSTERS_0_ENVIRONMENT_ID: "production",
+      PLUGINS_KUBERNETES_CLUSTERS_0_API_RESOURCES_WITH_SUPPORTED_METADATA_ONLY: "true",
       PLUGINS_SONARQUBE_ENABLED: "true",
       PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
       PLUGINS_SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
@@ -65,6 +67,7 @@ Use the menu above to view the different parts of Kronicle.  `,
         "https://github.com/kronicle-tech/kronicle-metadata-codebase-template.git",
       REPO_FINDERS_IGNORED_REPOS_2_URL:
         "https://github.com/kronicle-tech/kronicle-argocd-config.git",
+      LOGGING_LEVEL_TECH_KRONICLE: 'INFO',
     };
     const kronicleServiceSecrets = {
       PLUGINS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_USERNAME:
@@ -206,7 +209,7 @@ Use the menu above to view the different parts of Kronicle.  `,
   }
 
   private createVpc() {
-    return new ec2.Vpc(this, "KronicleVpc", {
+    const vpc = new ec2.Vpc(this, "KronicleVpc", {
       vpcName: "kronicle",
       maxAzs: 2,
       natGateways: 0,
@@ -218,6 +221,18 @@ Use the menu above to view the different parts of Kronicle.  `,
         },
       ],
     });
+
+    // Only needed by CloudWatch Synthetics Canary
+    vpc.addGatewayEndpoint('S3VpcEndpoint', {
+      service: ec2.GatewayVpcEndpointAwsService.S3
+    })
+
+    // Only needed by CloudWatch Synthetics Canary
+    vpc.addInterfaceEndpoint('CloudWatchVpcEndpoint', {
+      service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH
+    })
+
+    return vpc;
   }
 
   private createEcsCluster(vpc: ec2.Vpc) {
