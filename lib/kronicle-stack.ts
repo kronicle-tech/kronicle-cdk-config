@@ -12,7 +12,7 @@ export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const kronicleVersion = "0.1.401";
+    const kronicleVersion = "0.1.419";
     const domainName = "demo.kronicle.tech";
 
     // If you want to connect Kronicle to a Git host like GitHub or GitLab, you will probably need to configure Kronicle
@@ -202,7 +202,7 @@ Use the menu above to view the different parts of Kronicle.  `,
         },
       ],
       healthCheck: {
-        command: ["CMD", "java", "Healthcheck.java"],
+        command: ["CMD", "java", "-jar", "health-check.jar"],
         timeout: cdk.Duration.seconds(15),
         interval: cdk.Duration.seconds(30),
         retries: 10,
