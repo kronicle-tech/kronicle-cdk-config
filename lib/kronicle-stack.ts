@@ -24,8 +24,6 @@ import {
 import * as elb from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
-import * as sd from "aws-cdk-lib/aws-servicediscovery";
-import { NamespaceType } from "aws-cdk-lib/aws-servicediscovery";
 
 export class KronicleStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -107,7 +105,6 @@ Use the menu above to view the different parts of Kronicle.  `,
     };
 
     const vpc = this.createVpc();
-    // const cloudMapNamespace = this.createCloudMapNamespace();
     const cluster = this.createEcsCluster(vpc);
     const autoScalingGroup = this.createAutoScalingGroup(vpc);
     const capacityProvider = this.createCapacityProvider(
@@ -116,12 +113,6 @@ Use the menu above to view the different parts of Kronicle.  `,
     );
     const certificate = this.createCertificate(domainName);
     const taskDefinition = this.createTaskDefinition();
-    const kronicleAppContainer = this.createKronicleAppContainer(
-      taskDefinition,
-      kronicleVersion,
-      kronicleAppEnvironment,
-    );
-    cdk.Tags.of(kronicleAppContainer).add("component", "kronicle-app");
     const kronicleServiceContainer = this.createKronicleServiceContainer(
       taskDefinition,
       kronicleVersion,
@@ -129,6 +120,13 @@ Use the menu above to view the different parts of Kronicle.  `,
       kronicleServiceSecrets,
     );
     cdk.Tags.of(kronicleServiceContainer).add("component", "kronicle-service");
+    const kronicleAppContainer = this.createKronicleAppContainer(
+      taskDefinition,
+      kronicleVersion,
+      kronicleAppEnvironment,
+      kronicleServiceContainer,
+    );
+    cdk.Tags.of(kronicleAppContainer).add("component", "kronicle-app");
     this.addPolicyStatementsToTaskRole(taskDefinition, [
       {
         effect: iam.Effect.ALLOW,
@@ -171,8 +169,9 @@ Use the menu above to view the different parts of Kronicle.  `,
     environment: {
       [key: string]: string;
     },
+    kronicleServiceContainer: ecs.ContainerDefinition,
   ) {
-    return taskDefinition.addContainer("KronicleApp", {
+    let appContainerDefinition = taskDefinition.addContainer("KronicleApp", {
       containerName: "KronicleApp",
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-app:${kronicleVersion}`,
@@ -198,6 +197,11 @@ Use the menu above to view the different parts of Kronicle.  `,
       },
       environment,
     });
+    appContainerDefinition.addLink(
+      kronicleServiceContainer,
+      "kronicle-service",
+    );
+    return appContainerDefinition;
   }
 
   private createKronicleServiceContainer(
@@ -270,23 +274,10 @@ Use the menu above to view the different parts of Kronicle.  `,
     return vpc;
   }
 
-  // private createCloudMapNamespace() {
-  //   const id = "KronicleCloudMapNamespace";
-  //   return new sd.HttpNamespace(this, id, {
-  //     name: "local",
-  //     description: id,
-  //   });
-  // }
-
   private createEcsCluster(vpc: ec2.Vpc) {
     return new ecs.Cluster(this, "KronicleEcsCluster", {
       clusterName: "Kronicle",
       vpc,
-      defaultCloudMapNamespace: {
-        name: "local",
-        type: NamespaceType.HTTP,
-        useForServiceConnect: true,
-      },
     });
   }
 
@@ -378,15 +369,10 @@ Use the menu above to view the different parts of Kronicle.  `,
   }
 
   private createTaskDefinition() {
-    let taskDefinition = new ecs.Ec2TaskDefinition(
-      this,
-      "KronicleTaskDefinition",
-      {
-        family: "KronicleEc2",
-        networkMode: NetworkMode.BRIDGE,
-      },
-    );
-    return taskDefinition;
+    return new ecs.Ec2TaskDefinition(this, "KronicleTaskDefinition", {
+      family: "KronicleEc2",
+      networkMode: NetworkMode.BRIDGE,
+    });
   }
 
   private createApplicationLoadBalancedService(
@@ -430,15 +416,6 @@ Use the menu above to view the different parts of Kronicle.  `,
     );
     service.targetGroup.configureHealthCheck({
       path: "/health",
-    });
-    service.service.enableServiceConnect({
-      services: [
-        {
-          discoveryName: "kronicle-service",
-          portMappingName: "service",
-          port: 8090,
-        },
-      ],
     });
   }
 
