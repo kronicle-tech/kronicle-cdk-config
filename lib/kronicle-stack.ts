@@ -1,9 +1,22 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
+import * as autoscaling from "aws-cdk-lib/aws-autoscaling";
+import {
+  AutoScalingGroup,
+  SpotAllocationStrategy,
+  UpdatePolicy,
+} from "aws-cdk-lib/aws-autoscaling";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as ecs from "aws-cdk-lib/aws-ecs";
+import { AsgCapacityProvider, MachineImageType } from "aws-cdk-lib/aws-ecs";
 import * as ecsPatterns from "aws-cdk-lib/aws-ecs-patterns";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import {
+  InstanceArchitecture,
+  InstanceType,
+  LaunchTemplate,
+  SubnetType,
+} from "aws-cdk-lib/aws-ec2";
 import * as elb from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
@@ -28,7 +41,7 @@ export class KronicleStack extends cdk.Stack {
     const kronicleServiceConfigSecret = sm.Secret.fromSecretNameV2(
       this,
       "KronicleServiceConfigSecret",
-      "kronicle"
+      "Kronicle"
     );
 
     let kronicleAppEnvironment = {
@@ -57,7 +70,8 @@ Use the menu above to view the different parts of Kronicle.  `,
       PLUGINS_AWS_LOG_SUMMARIES_TWENTY_FOUR_HOUR_SUMMARIES: "false",
       PLUGINS_KUBERNETES_ENABLED: "true",
       PLUGINS_KUBERNETES_CLUSTERS_0_ENVIRONMENT_ID: "production",
-      PLUGINS_KUBERNETES_CLUSTERS_0_API_RESOURCES_WITH_SUPPORTED_METADATA_ONLY: "true",
+      PLUGINS_KUBERNETES_CLUSTERS_0_API_RESOURCES_WITH_SUPPORTED_METADATA_ONLY:
+        "true",
       PLUGINS_SONARQUBE_ENABLED: "true",
       PLUGINS_SONARQUBE_BASE_URL: "https://sonarcloud.io",
       PLUGINS_SONARQUBE_ORGANIZATIONS_0: "kronicle-tech",
@@ -67,7 +81,7 @@ Use the menu above to view the different parts of Kronicle.  `,
         "https://github.com/kronicle-tech/kronicle-metadata-codebase-template.git",
       REPO_FINDERS_IGNORED_REPOS_2_URL:
         "https://github.com/kronicle-tech/kronicle-argocd-config.git",
-      LOGGING_LEVEL_TECH_KRONICLE: 'INFO',
+      LOGGING_LEVEL_TECH_KRONICLE: "INFO",
     };
     const kronicleServiceSecrets = {
       PLUGINS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_USERNAME:
@@ -80,17 +94,21 @@ Use the menu above to view the different parts of Kronicle.  `,
           kronicleServiceConfigSecret,
           "kronicle-tech-github-access-token"
         ),
-      PLUGINS_KUBERNETES_CLUSTERS_0_KUBE_CONFIG:
-        ecs.Secret.fromSecretsManager(
-          kronicleServiceConfigSecret,
-          "example-eks-kube-config"
-        ),
+      PLUGINS_KUBERNETES_CLUSTERS_0_KUBE_CONFIG: ecs.Secret.fromSecretsManager(
+        kronicleServiceConfigSecret,
+        "example-eks-kube-config"
+      ),
     };
 
     const vpc = this.createVpc();
     const cluster = this.createEcsCluster(vpc);
+    const autoScalingGroup = this.createAutoScalingGroup(vpc);
+    const capacityProvider = this.createCapacityProvider(
+      cluster,
+      autoScalingGroup
+    );
     const certificate = this.createCertificate(domainName);
-    const taskDefinition = this.createFargateTaskDefinition();
+    const taskDefinition = this.createTaskDefinition();
     const kronicleAppContainer = this.createKronicleAppContainer(
       taskDefinition,
       kronicleVersion,
@@ -104,7 +122,7 @@ Use the menu above to view the different parts of Kronicle.  `,
       kronicleServiceSecrets
     );
     cdk.Tags.of(kronicleServiceContainer).add("component", "kronicle-service");
-    this.addPolicyStatementsToFargateTaskRole(taskDefinition, [
+    this.addPolicyStatementsToTaskRole(taskDefinition, [
       {
         effect: iam.Effect.ALLOW,
         actions: ["xray:GetServiceGraph"],
@@ -127,13 +145,15 @@ Use the menu above to view the different parts of Kronicle.  `,
       },
       {
         effect: iam.Effect.ALLOW,
-        actions: ['eks:AccessKubernetesApi',],
-        resources: ['*'],
-      }
+        actions: ["eks:AccessKubernetesApi"],
+        resources: ["*"],
+      },
     ]);
-    this.createApplicationLoadBalancedFargateService(
+    this.createApplicationLoadBalancedService(
       cluster,
       taskDefinition,
+      autoScalingGroup,
+      capacityProvider,
       certificate
     );
   }
@@ -146,15 +166,15 @@ Use the menu above to view the different parts of Kronicle.  `,
     }
   ) {
     return taskDefinition.addContainer("KronicleApp", {
-      containerName: "kronicle-app",
+      containerName: "KronicleApp",
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-app:${kronicleVersion}`
       ),
-      cpu: 256,
-      memoryReservationMiB: 1_024,
+      cpu: 128,
+      memoryReservationMiB: 512,
       essential: true,
       logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: "kronicle-app",
+        streamPrefix: "KronicleApp",
       }),
       portMappings: [
         {
@@ -183,15 +203,15 @@ Use the menu above to view the different parts of Kronicle.  `,
     }
   ) {
     return taskDefinition.addContainer("KronicleService", {
-      containerName: "kronicle-service",
+      containerName: "KronicleService",
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-service:${kronicleVersion}`
       ),
-      cpu: 768,
-      memoryReservationMiB: 2_024,
+      cpu: 384,
+      memoryReservationMiB: 1_024,
       essential: true,
       logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: "kronicle-service",
+        streamPrefix: "KronicleService",
       }),
       portMappings: [
         {
@@ -215,7 +235,7 @@ Use the menu above to view the different parts of Kronicle.  `,
 
   private createVpc() {
     const vpc = new ec2.Vpc(this, "KronicleVpc", {
-      vpcName: "kronicle",
+      vpcName: "Kronicle",
       maxAzs: 2,
       natGateways: 0,
       subnetConfiguration: [
@@ -227,24 +247,104 @@ Use the menu above to view the different parts of Kronicle.  `,
       ],
     });
 
-    // Only needed by CloudWatch Synthetics Canary
-    vpc.addGatewayEndpoint('S3VpcEndpoint', {
-      service: ec2.GatewayVpcEndpointAwsService.S3
-    })
+    // // Only needed by CloudWatch Synthetics Canary
+    // vpc.addGatewayEndpoint('S3VpcEndpoint', {
+    //   service: ec2.GatewayVpcEndpointAwsService.S3
+    // })
 
-    // Only needed by CloudWatch Synthetics Canary
-    vpc.addInterfaceEndpoint('CloudWatchVpcEndpoint', {
-      service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH
-    })
+    // // Only needed by CloudWatch Synthetics Canary
+    // vpc.addInterfaceEndpoint('CloudWatchVpcEndpoint', {
+    //   service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH
+    // })
 
     return vpc;
   }
 
   private createEcsCluster(vpc: ec2.Vpc) {
     return new ecs.Cluster(this, "KronicleEcsCluster", {
-      clusterName: "kronicle",
+      clusterName: "Kronicle",
       vpc,
     });
+  }
+
+  private createAutoScalingGroup(vpc: ec2.Vpc) {
+    const spotInstanceTypes = [
+      "t3a.medium",
+      "t3.medium",
+      "t2.medium",
+      "t3a.large",
+      "t3.large",
+      "m5a.large",
+      "m6a.large",
+      "t2.large",
+      "m6i.large",
+      "m5.large",
+      "m4.large",
+    ];
+    const nodeSecurityGroup = new ec2.SecurityGroup(
+      this,
+      "KronicleNodeSecurityGroup",
+      {
+        securityGroupName: "KronicleNodeSecurityGroup",
+        vpc,
+        allowAllOutbound: true,
+      }
+    );
+    return new AutoScalingGroup(this, "KronicleAutoScalingGroup", {
+      vpc,
+      vpcSubnets: {
+        subnetType: SubnetType.PUBLIC,
+      },
+      allowAllOutbound: true,
+      maxCapacity: 1,
+      minCapacity: 1,
+      mixedInstancesPolicy: {
+        instancesDistribution: {
+          onDemandPercentageAboveBaseCapacity: 0,
+          spotAllocationStrategy:
+            SpotAllocationStrategy.PRICE_CAPACITY_OPTIMIZED,
+          // // t4g.small currently costs 0.0376 for on-demand
+          spotMaxPrice: "0.0376",
+        },
+        launchTemplate: new LaunchTemplate(this, "KronicleLaunchTemplate", {
+          launchTemplateName: "KronicleLaunchTemplate",
+          securityGroup: nodeSecurityGroup,
+          instanceType: new InstanceType("t3a.medium"),
+          machineImage: new ecs.BottleRocketImage({
+            architecture: InstanceArchitecture.X86_64,
+          }),
+          userData: ec2.UserData.forLinux(),
+          role: new iam.Role(this, "KronicleNodeRole", {
+            assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
+          }),
+        }),
+        launchTemplateOverrides: spotInstanceTypes.map((instanceType) => ({
+          instanceType: new InstanceType(instanceType),
+        })),
+      },
+      updatePolicy: UpdatePolicy.rollingUpdate({}),
+    });
+  }
+
+  private createCapacityProvider(
+    cluster: ecs.Cluster,
+    autoScalingGroup: autoscaling.AutoScalingGroup
+  ) {
+    const capacityProvider = new AsgCapacityProvider(
+      this,
+      "KronicleCapacityProvider",
+      {
+        capacityProviderName: "KronicleCapacityProvider",
+        autoScalingGroup,
+        canContainersAccessInstanceRole: true,
+        enableManagedScaling: true,
+        enableManagedTerminationProtection: false,
+        machineImageType: MachineImageType.BOTTLEROCKET,
+        spotInstanceDraining: true,
+      }
+    );
+    cluster.addAsgCapacityProvider(capacityProvider);
+    return capacityProvider;
   }
 
   private createCertificate(domainName: string) {
@@ -254,44 +354,58 @@ Use the menu above to view the different parts of Kronicle.  `,
     });
   }
 
-  private createFargateTaskDefinition() {
-    return new ecs.FargateTaskDefinition(this, "KronicleTaskDefinition", {
-      family: "kronicle",
-      cpu: 1_024,
-      memoryLimitMiB: 4_096,
+  private createTaskDefinition() {
+    return new ecs.Ec2TaskDefinition(this, "KronicleTaskDefinition", {
+      family: "KronicleEc2",
     });
   }
 
-  private createApplicationLoadBalancedFargateService(
+  private createApplicationLoadBalancedService(
     cluster: ecs.Cluster,
-    taskDefinition: ecs.FargateTaskDefinition,
+    taskDefinition: ecs.Ec2TaskDefinition,
+    autoScalingGroup: autoscaling.AutoScalingGroup,
+    capacityProvider: AsgCapacityProvider,
     certificate: acm.Certificate
   ) {
-    const service = new ecsPatterns.ApplicationLoadBalancedFargateService(
+    const service = new ecsPatterns.ApplicationLoadBalancedEc2Service(
       this,
       "KronicleEcsService",
       {
-        serviceName: "kronicle",
-        loadBalancerName: "kronicle",
+        serviceName: "KronicleEc2",
+        loadBalancerName: "KronicleEc2",
         cluster,
         taskDefinition,
-        assignPublicIp: true,
         recordType: ecsPatterns.ApplicationLoadBalancedServiceRecordType.CNAME,
         certificate,
         sslPolicy: elb.SslPolicy.RECOMMENDED,
         redirectHTTP: true,
+        publicLoadBalancer: true,
+        openListener: true,
         circuitBreaker: {
-          rollback: true,
+          //rollback: true,
+          rollback: false,
         },
+        capacityProviderStrategies: [
+          {
+            capacityProvider: capacityProvider.capacityProviderName,
+            weight: 1,
+          },
+        ],
       }
+    );
+    // See https://github.com/aws/aws-cdk/issues/16260
+    autoScalingGroup.connections.allowFrom(
+      service.loadBalancer,
+      ec2.Port.tcpRange(32768, 65535),
+      "Allow from load balancer"
     );
     service.targetGroup.configureHealthCheck({
       path: "/health",
     });
   }
 
-  private addPolicyStatementsToFargateTaskRole(
-    taskDefinition: ecs.FargateTaskDefinition,
+  private addPolicyStatementsToTaskRole(
+    taskDefinition: ecs.TaskDefinition,
     policyStatements: ReadonlyArray<iam.PolicyStatementProps>
   ) {
     policyStatements.forEach((policyStatement) =>
