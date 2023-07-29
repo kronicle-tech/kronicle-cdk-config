@@ -85,7 +85,7 @@ Use the menu above to view the different parts of Kronicle.  `,
         "https://github.com/kronicle-tech/kronicle-metadata-codebase-template.git",
       REPO_FINDERS_IGNORED_REPOS_2_URL:
         "https://github.com/kronicle-tech/kronicle-argocd-config.git",
-      LOGGING_LEVEL_TECH_KRONICLE: "INFO",
+      LOGGING_LEVEL_TECH_KRONICLE: "WARN",
     };
     const kronicleServiceSecrets = {
       PLUGINS_GITHUB_ORGANIZATIONS_0_ACCESS_TOKEN_USERNAME:
