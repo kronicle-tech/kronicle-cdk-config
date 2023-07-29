@@ -22,6 +22,7 @@ import {
   SubnetType,
 } from "aws-cdk-lib/aws-ec2";
 import * as elb from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import { ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
 
@@ -113,6 +114,12 @@ Use the menu above to view the different parts of Kronicle.  `,
     );
     const certificate = this.createCertificate(domainName);
     const taskDefinition = this.createTaskDefinition();
+    const kronicleAppContainer = this.createKronicleAppContainer(
+      taskDefinition,
+      kronicleVersion,
+      kronicleAppEnvironment,
+    );
+    cdk.Tags.of(kronicleAppContainer).add("component", "kronicle-app");
     const kronicleServiceContainer = this.createKronicleServiceContainer(
       taskDefinition,
       kronicleVersion,
@@ -120,13 +127,7 @@ Use the menu above to view the different parts of Kronicle.  `,
       kronicleServiceSecrets,
     );
     cdk.Tags.of(kronicleServiceContainer).add("component", "kronicle-service");
-    const kronicleAppContainer = this.createKronicleAppContainer(
-      taskDefinition,
-      kronicleVersion,
-      kronicleAppEnvironment,
-      kronicleServiceContainer,
-    );
-    cdk.Tags.of(kronicleAppContainer).add("component", "kronicle-app");
+    kronicleAppContainer.addLink(kronicleServiceContainer, "kronicle-service");
     this.addPolicyStatementsToTaskRole(taskDefinition, [
       {
         effect: iam.Effect.ALLOW,
@@ -169,9 +170,8 @@ Use the menu above to view the different parts of Kronicle.  `,
     environment: {
       [key: string]: string;
     },
-    kronicleServiceContainer: ecs.ContainerDefinition,
   ) {
-    let appContainerDefinition = taskDefinition.addContainer("KronicleApp", {
+    return taskDefinition.addContainer("KronicleApp", {
       containerName: "KronicleApp",
       image: ecs.ContainerImage.fromRegistry(
         `public.ecr.aws/kronicle-tech/kronicle-app:${kronicleVersion}`,
@@ -197,11 +197,6 @@ Use the menu above to view the different parts of Kronicle.  `,
       },
       environment,
     });
-    appContainerDefinition.addLink(
-      kronicleServiceContainer,
-      "kronicle-service",
-    );
-    return appContainerDefinition;
   }
 
   private createKronicleServiceContainer(
@@ -416,6 +411,17 @@ Use the menu above to view the different parts of Kronicle.  `,
     );
     service.targetGroup.configureHealthCheck({
       path: "/health",
+    });
+    const targetGroupId = "KronicleTargetGroup";
+    service.listener.addTargets(targetGroupId, {
+      targetGroupName: targetGroupId,
+      protocol: ApplicationProtocol.HTTPS,
+      targets: [
+        service.service.loadBalancerTarget({
+          containerName: "KronicleApp",
+          containerPort: 3000,
+        }),
+      ],
     });
   }
 
