@@ -22,7 +22,6 @@ import {
   SubnetType,
 } from "aws-cdk-lib/aws-ec2";
 import * as elb from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import { ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
 
@@ -243,7 +242,17 @@ Use the menu above to view the different parts of Kronicle.  `,
   }
 
   private createVpc() {
-    const vpc = new ec2.Vpc(this, "KronicleVpc", {
+    // // Only needed by CloudWatch Synthetics Canary
+    // vpc.addGatewayEndpoint('S3VpcEndpoint', {
+    //   service: ec2.GatewayVpcEndpointAwsService.S3
+    // })
+
+    // // Only needed by CloudWatch Synthetics Canary
+    // vpc.addInterfaceEndpoint('CloudWatchVpcEndpoint', {
+    //   service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH
+    // })
+
+    return new ec2.Vpc(this, "KronicleVpc", {
       vpcName: "Kronicle",
       maxAzs: 2,
       natGateways: 0,
@@ -255,18 +264,6 @@ Use the menu above to view the different parts of Kronicle.  `,
         },
       ],
     });
-
-    // // Only needed by CloudWatch Synthetics Canary
-    // vpc.addGatewayEndpoint('S3VpcEndpoint', {
-    //   service: ec2.GatewayVpcEndpointAwsService.S3
-    // })
-
-    // // Only needed by CloudWatch Synthetics Canary
-    // vpc.addInterfaceEndpoint('CloudWatchVpcEndpoint', {
-    //   service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH
-    // })
-
-    return vpc;
   }
 
   private createEcsCluster(vpc: ec2.Vpc) {
@@ -411,17 +408,6 @@ Use the menu above to view the different parts of Kronicle.  `,
     );
     service.targetGroup.configureHealthCheck({
       path: "/health",
-    });
-    const targetGroupId = "KronicleTargetGroup";
-    service.listener.addTargets(targetGroupId, {
-      targetGroupName: targetGroupId,
-      protocol: ApplicationProtocol.HTTPS,
-      targets: [
-        service.service.loadBalancerTarget({
-          containerName: "KronicleApp",
-          containerPort: 3000,
-        }),
-      ],
     });
   }
 
